@@ -4,19 +4,19 @@ object UsuariosManager {
     private val usuarios = mutableListOf<UsuarioSimple>()
 
     init {
-        // Usuario de prueba pre-cargado
+        // Usuario 1
         usuarios.add(
             UsuarioSimple(
-                nombre = "Juan",
-                email = "juan@test.com",
+                nombre = "Damian",
+                email = "damian.duoc.cl",
                 password = "123456"
             )
         )
-        // Usuario Duoc de prueba
+        // Usuario 2
         usuarios.add(
             UsuarioSimple(
-                nombre = "María",
-                email = "maria@duoc.cl",
+                nombre = "Jean Piere",
+                email = "jean@duoc.cl",
                 password = "123456"
             )
         )

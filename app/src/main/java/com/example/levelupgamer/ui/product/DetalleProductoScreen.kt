@@ -11,6 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.levelupgamer.ui.product.getProductImageRes
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,15 +71,14 @@ fun DetalleProductoScreen(
                     .height(300.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
-                Icon(
-                    Icons.Default.Inventory,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(64.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                Image(
+                    painter = painterResource(id = getProductImageRes(productoCodigo)),
+                    contentDescription = producto.first, // nombre
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
             }
+
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(

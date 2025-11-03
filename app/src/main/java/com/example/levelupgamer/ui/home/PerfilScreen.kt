@@ -11,23 +11,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.levelupgamer.viewmodel.PerfilViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilScreen(
     navController: NavController,
-    username: String
+    username: String,
+    viewModel: PerfilViewModel = viewModel()
 ) {
-    var nombre by remember { mutableStateOf(username) }
-    var telefono by remember { mutableStateOf("+56912345678") }
-    var direccion by remember { mutableStateOf("Santiago, Chile") }
-    var showSnackbar by remember { mutableStateOf(false) }
+    val uiState = viewModel.uiState
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(showSnackbar) {
-        if (showSnackbar) {
-            snackbarHostState.showSnackbar("Perfil actualizado")
-            showSnackbar = false
+    // Cargar nombre inicial desde el username que viene del login/registro
+    LaunchedEffect(username) {
+        viewModel.setNombreInicial(username)
+    }
+
+    // Mostrar snackbar cuando haya mensaje
+    LaunchedEffect(uiState.mensaje) {
+        uiState.mensaje?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensaje()
         }
     }
 
@@ -52,6 +58,7 @@ fun PerfilScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Tarjeta con info principal
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -72,7 +79,7 @@ fun PerfilScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = username,
+                        text = uiState.nombre.ifBlank { username },
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -92,47 +99,76 @@ fun PerfilScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
+            // Nombre
             OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
+                value = uiState.nombre,
+                onValueChange = { viewModel.onNombreChange(it) },
                 label = { Text("Nombre") },
                 leadingIcon = { Icon(Icons.Default.Person, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
             )
 
+            // Teléfono
             OutlinedTextField(
-                value = telefono,
-                onValueChange = { telefono = it },
+                value = uiState.telefono,
+                onValueChange = { viewModel.onTelefonoChange(it) },
                 label = { Text("Teléfono") },
                 leadingIcon = { Icon(Icons.Default.Phone, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
             )
 
+            // Dirección
             OutlinedTextField(
-                value = direccion,
-                onValueChange = { direccion = it },
+                value = uiState.direccion,
+                onValueChange = { viewModel.onDireccionChange(it) },
                 label = { Text("Dirección") },
                 leadingIcon = { Icon(Icons.Default.Home, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
             )
+
+            // Error si falta info
+            if (uiState.error != null) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = uiState.error,
+                        modifier = Modifier.padding(12.dp),
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { showSnackbar = true },
+                onClick = { viewModel.guardarCambios() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
-                )
+                ),
+                enabled = !uiState.isLoading
             ) {
-                Icon(Icons.Default.Save, null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("GUARDAR CAMBIOS")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Default.Save, null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("GUARDAR CAMBIOS")
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

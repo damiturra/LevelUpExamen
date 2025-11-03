@@ -1,38 +1,25 @@
 package com.example.levelupgamer.ui.login
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.levelupgamer.viewmodel.LoginViewModel
-import com.example.levelupgamer.R
-
-// animación
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.ui.graphics.graphicsLayer
+import com.example.levelupgamer.viewmodel.RegistroViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
+fun RegistroScreen(
     navController: NavController,
-    viewModel: LoginViewModel = viewModel()
+    viewModel: RegistroViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
     var showPassword by remember { mutableStateOf(false) }
@@ -40,7 +27,12 @@ fun LoginScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("LEVEL-UP GAMER") },
+                title = { Text("Registro") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -57,47 +49,30 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // 🔹 Logo animado al tocar
-            var pressed by remember { mutableStateOf(false) }
-
-            val scale by animateFloatAsState(
-                targetValue = if (pressed) 1.2f else 1f,   // 20% más grande
-                animationSpec = tween(durationMillis = 150),
-                label = "logoPressScale"
-            )
-
-            Image(
-                painter = painterResource(id = R.drawable.logo_levelup),
-                contentDescription = "Logo Level-Up Gamer",
-                modifier = Modifier
-                    .size(120.dp)
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale
-                    )
-                    .clickable {
-                        pressed = !pressed
-                    },
-                contentScale = ContentScale.Fit
-            )
-
             Text(
-                text = "Bienvenido",
+                text = "Crea tu cuenta",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Text(
-                text = "Inicia sesión para continuar",
+                text = "Completa los siguientes datos",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Correo
+            OutlinedTextField(
+                value = uiState.nombre,
+                onValueChange = { viewModel.onNombreChange(it) },
+                label = { Text("Nombre") },
+                leadingIcon = { Icon(Icons.Default.Person, null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
+            )
+
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = { viewModel.onEmailChange(it) },
@@ -108,7 +83,16 @@ fun LoginScreen(
                 enabled = !uiState.isLoading
             )
 
-            // Contraseña
+            OutlinedTextField(
+                value = uiState.fechaNacimiento,
+                onValueChange = { viewModel.onFechaNacimientoChange(it) },
+                label = { Text("Fecha de nacimiento (dd/mm/aaaa)") },
+                leadingIcon = { Icon(Icons.Default.DateRange, null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading
+            )
+
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
@@ -132,7 +116,6 @@ fun LoginScreen(
                 enabled = !uiState.isLoading
             )
 
-            // Error
             if (uiState.error != null) {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -147,27 +130,15 @@ fun LoginScreen(
                 }
             }
 
-            // Info de usuarios de prueba
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        "👤 Usuarios de prueba:",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+            if (uiState.mensajeExito != null) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                ) {
                     Text(
-                        "• damian@duoc.cl / 123456",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        "• jean@duoc.cl / 123456",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = uiState.mensajeExito,
+                        modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
@@ -175,11 +146,10 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón de login
             Button(
                 onClick = {
-                    viewModel.hacerLogin { nombreUsuario, esUsuarioDuoc ->
-                        navController.navigate("home/$nombreUsuario/$esUsuarioDuoc") {
+                    viewModel.registrar { nombreUsuario, esDuoc ->
+                        navController.navigate("home/$nombreUsuario/$esDuoc") {
                             popUpTo("login") { inclusive = true }
                         }
                     }
@@ -198,17 +168,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("INICIAR SESIÓN")
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("¿No tienes cuenta? ")
-                TextButton(onClick = { navController.navigate("registro") }) {
-                    Text(
-                        "Regístrate",
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Text("REGISTRARME")
                 }
             }
         }

@@ -8,18 +8,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.levelupgamer.data.dao.CarritoDao
 import com.example.levelupgamer.data.dao.CategoriaDao
 import com.example.levelupgamer.data.dao.ProductoDao
-import com.example.levelupgamer.data.dao.UsuarioDao
 import com.example.levelupgamer.data.model.Categoria
 import com.example.levelupgamer.data.model.ItemCarrito
 import com.example.levelupgamer.data.model.Producto
-import com.example.levelupgamer.data.model.Usuario
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
     entities = [
-        Usuario::class,
         Producto::class,
         Categoria::class,
         ItemCarrito::class
@@ -29,7 +26,6 @@ import kotlinx.coroutines.launch
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    abstract fun usuarioDao(): UsuarioDao
     abstract fun productoDao(): ProductoDao
     abstract fun categoriaDao(): CategoriaDao
     abstract fun carritoDao(): CarritoDao

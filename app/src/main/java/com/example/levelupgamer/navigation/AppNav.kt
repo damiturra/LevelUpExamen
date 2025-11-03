@@ -10,6 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.levelupgamer.ui.login.RegistroScreen
+import com.example.levelupgamer.ui.qr.QrScannerScreen
+
 
 import com.example.levelupgamer.ui.home.HomeScreen
 
@@ -25,7 +28,10 @@ fun AppNavigation() {
             LoginScreen(navController = navController)
         }
 
-
+        // 👇 FALTA ESTA RUTA
+        composable(route = "registro") {
+            RegistroScreen(navController = navController)
+        }
 
         composable(
             route = "home/{username}/{esDuoc}",
@@ -59,6 +65,10 @@ fun AppNavigation() {
         composable(route = "carrito") {
             CarritoScreen(navController = navController)
         }
+        composable(route = "scanner") {
+            QrScannerScreen(navController = navController)
+        }
+
 
         composable(
             route = "perfil/{username}",

@@ -14,6 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.levelupgamer.ui.product.getProductImageRes
+
+
 
 data class ProductoSimple(
     val codigo: String,
@@ -32,13 +39,18 @@ fun HomeScreen(
     val productos = remember {
         listOf(
             ProductoSimple("JM001", "Catan", 29990, "Juegos de Mesa"),
+            ProductoSimple("JM002", "Carcassonne", 24990, "Juegos de Mesa"),
             ProductoSimple("AC001", "Controlador Xbox", 59990, "Accesorios"),
+            ProductoSimple("AC002", "Auriculares HyperX Cloud II", 79990, "Accesorios"),
             ProductoSimple("CO001", "PlayStation 5", 549990, "Consolas"),
+            ProductoSimple("CG001", "PC Gamer ASUS ROG Strix", 1299990, "PC Gamer"),
             ProductoSimple("MS001", "Mouse Gamer", 49990, "Mouse"),
+            ProductoSimple("MP001", "Mousepad Razer", 29990, "Mousepad"),
             ProductoSimple("SG001", "Silla Gamer", 349990, "Sillas"),
             ProductoSimple("PP001", "Polera Gamer", 14990, "Poleras")
         )
     }
+
 
     Scaffold(
         topBar = {
@@ -57,6 +69,12 @@ fun HomeScreen(
                         }
                     }) {
                         Icon(Icons.Default.Logout, "Cerrar Sesión")
+                    }
+                    IconButton(onClick = { navController.navigate("scanner") }) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Escanear QR")
+                    }
+                    IconButton(onClick = { navController.navigate("carrito") }) {
+                        Icon(Icons.Default.ShoppingCart, "Carrito")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -124,14 +142,17 @@ fun HomeScreen(
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Icon(
-                                Icons.Default.Inventory,
-                                contentDescription = null,
+                            Image(
+                                painter = painterResource(id = getProductImageRes(producto.codigo)),
+                                contentDescription = producto.nombre,
                                 modifier = Modifier
-                                    .size(80.dp)
+                                    .height(120.dp)
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
                                     .align(Alignment.CenterHorizontally),
-                                tint = MaterialTheme.colorScheme.primary
+                                contentScale = ContentScale.Crop
                             )
+
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = producto.nombre,

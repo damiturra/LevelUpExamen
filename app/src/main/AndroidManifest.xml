@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 🔹 Permiso de cámara -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- 🔹 Indicamos que la app puede usar cámara, pero no es obligatorio -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
