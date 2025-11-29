@@ -15,7 +15,8 @@ data class Producto(
     val stock: Int = 100,
     val imagenUrl: String = "",
     val fabricante: String = "",
-    val calificacion: Float = 0f
+    val calificacion: Float = 0f,
+    val vendedorId: Long = 0
 ) {
     companion object {
         fun obtenerProductosDefault(): List<Producto> {

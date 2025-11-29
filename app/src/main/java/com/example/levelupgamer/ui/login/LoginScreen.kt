@@ -22,11 +22,10 @@ import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.levelupgamer.viewmodel.LoginViewModel
 import com.example.levelupgamer.R
-
-// animación
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
+import com.example.levelupgamer.data.user.Role
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,11 +58,9 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 🔹 Logo animado al tocar
             var pressed by remember { mutableStateOf(false) }
-
             val scale by animateFloatAsState(
-                targetValue = if (pressed) 1.2f else 1f,   // 20% más grande
+                targetValue = if (pressed) 1.2f else 1f,
                 animationSpec = tween(durationMillis = 150),
                 label = "logoPressScale"
             )
@@ -73,72 +70,47 @@ fun LoginScreen(
                 contentDescription = "Logo Level-Up Gamer",
                 modifier = Modifier
                     .size(120.dp)
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale
-                    )
-                    .clickable {
-                        pressed = !pressed
-                    },
+                    .graphicsLayer(scaleX = scale, scaleY = scale)
+                    .clickable { pressed = !pressed },
                 contentScale = ContentScale.Fit
             )
 
-            Text(
-                text = "Bienvenido",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = "Inicia sesión para continuar",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text("Bienvenido", style = MaterialTheme.typography.headlineMedium)
+            Text("Inicia sesión para continuar", style = MaterialTheme.typography.bodyLarge)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Correo
             OutlinedTextField(
                 value = uiState.email,
                 onValueChange = { viewModel.onEmailChange(it) },
                 label = { Text("Correo electrónico") },
-                leadingIcon = { Icon(Icons.Default.Email, null) },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             )
 
-            // Contraseña
             OutlinedTextField(
                 value = uiState.password,
                 onValueChange = { viewModel.onPasswordChange(it) },
                 label = { Text("Contraseña") },
-                leadingIcon = { Icon(Icons.Default.Lock, null) },
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
                     IconButton(onClick = { showPassword = !showPassword }) {
                         Icon(
-                            if (showPassword) Icons.Default.VisibilityOff
-                            else Icons.Default.Visibility,
+                            if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = null
                         )
                     }
                 },
-                visualTransformation = if (showPassword)
-                    VisualTransformation.None
-                else
-                    PasswordVisualTransformation(),
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             )
 
-            // Error
             if (uiState.error != null) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
                     Text(
                         text = uiState.error,
                         modifier = Modifier.padding(12.dp),
@@ -147,50 +119,47 @@ fun LoginScreen(
                 }
             }
 
-            // Info de usuarios de prueba
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        "👤 Usuarios de prueba:",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "• damian@duoc.cl / 123456",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Text(
-                        "• jean@duoc.cl / 123456",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Text("👤 Usuarios de prueba:", style = MaterialTheme.typography.labelMedium)
+                    Spacer(Modifier.height(4.dp))
+                    Text("• damian@duoc.cl / 123456  (USER)")
+                    Text("• jean@duoc.cl / 123456    (USER)")
+                    Text("• damian@vendedor.cl / 123456  (VENDEDOR)")
+                    Text("• jean@vendedor.cl / 123456    (VENDEDOR)")
+                    Text("• damian@admin.cl / 123456  (ADMIN)")
+                    Text("• jean@admin.cl / 123456    (ADMIN)")
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón de login
             Button(
                 onClick = {
-                    viewModel.hacerLogin { nombreUsuario, esUsuarioDuoc ->
-                        navController.navigate("home/$nombreUsuario/$esUsuarioDuoc") {
-                            popUpTo("login") { inclusive = true }
+                    viewModel.hacerLogin { nombreUsuario, esUsuarioDuoc, role ->
+                        when (role) {
+                            Role.USER -> navController.navigate("homeUsuario/$nombreUsuario") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                            Role.VENDEDOR -> {
+                                val vendId = com.example.levelupgamer.data.session.SessionManager.currentVendedorId ?: 0L
+                                navController.navigate("homeVendedor/$vendId") {                // 👈 usa el Long del Session
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
+                            Role.ADMIN -> {
+                                navController.navigate("homeSupervisor") {                       // 👈 sin args
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
                         }
+
                     }
                 },
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                    .height(50.dp)
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
@@ -204,13 +173,23 @@ fun LoginScreen(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("¿No tienes cuenta? ")
-                TextButton(onClick = { navController.navigate("registro") }) {
-                    Text(
-                        "Regístrate",
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                TextButton(onClick = { /* navController.navigate("registro") */ }) {
+                    Text("Regístrate", color = MaterialTheme.colorScheme.secondary)
                 }
             }
         }
+    }
+}
+
+/**
+ * Demo: mapea un email de vendedor a un vendedorId (Long) para la ruta homeVendedor/{vendedorId}.
+ * Cuando quieras, cambia esto para consultar Room (VendedorDao) y traer el ID real.
+ */
+private fun mapEmailToVendedorId(email: String): Long {
+    // mapping de ejemplo
+    return when (email.trim().lowercase()) {
+        "damian@vendedor.cl" -> 1L
+        "jean@vendedor.cl" -> 2L
+        else -> 1L // fallback
     }
 }

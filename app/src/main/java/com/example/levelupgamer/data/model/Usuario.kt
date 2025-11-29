@@ -1,23 +1,70 @@
 package com.example.levelupgamer.data.model
 
+import com.example.levelupgamer.data.user.Role
+
 object UsuariosManager {
     private val usuarios = mutableListOf<UsuarioSimple>()
 
     init {
-        // Usuario 1
+        // Usuarios DUOC (USER)
         usuarios.add(
             UsuarioSimple(
                 nombre = "Damian",
-                email = "damian.duoc.cl",
-                password = "123456"
+                email = "damian@duoc.cl",
+                password = "123456",
+                esDuoc = true,
+                role = Role.USER
             )
         )
-        // Usuario 2
         usuarios.add(
             UsuarioSimple(
                 nombre = "Jean Piere",
                 email = "jean@duoc.cl",
-                password = "123456"
+                password = "123456",
+                esDuoc = true,
+                role = Role.USER
+            )
+        )
+
+        // Vendedores (ahora con vendedorId)
+        usuarios.add(
+            UsuarioSimple(
+                nombre = "Damian Vendedor",
+                email = "damian@vendedor.cl",
+                password = "123456",
+                esDuoc = false,
+                role = Role.VENDEDOR,
+                vendedorId = 1L
+            )
+        )
+        usuarios.add(
+            UsuarioSimple(
+                nombre = "Jean Vendedor",
+                email = "jean@vendedor.cl",
+                password = "123456",
+                esDuoc = false,
+                role = Role.VENDEDOR,
+                vendedorId = 2L
+            )
+        )
+
+        // Admin
+        usuarios.add(
+            UsuarioSimple(
+                nombre = "Damian Admin",
+                email = "damian@admin.cl",
+                password = "123456",
+                esDuoc = false,
+                role = Role.ADMIN
+            )
+        )
+        usuarios.add(
+            UsuarioSimple(
+                nombre = "Jean Admin",
+                email = "jean@admin.cl",
+                password = "123456",
+                esDuoc = false,
+                role = Role.ADMIN
             )
         )
     }
@@ -28,70 +75,38 @@ object UsuariosManager {
         password: String,
         fechaNacimiento: String
     ): ResultadoRegistro {
-        // Validar edad
         val edad = calcularEdad(fechaNacimiento)
-        if (edad < 18) {
-            return ResultadoRegistro.Error("Debes ser mayor de 18 años")
-        }
+        if (edad < 18) return ResultadoRegistro.Error("Debes ser mayor de 18 años")
 
-        // Verificar si el email ya existe
-        if (usuarios.any { it.email == email }) {
+        if (usuarios.any { it.email.equals(email.trim(), ignoreCase = true) }) {
             return ResultadoRegistro.Error("El correo ya está registrado")
         }
 
-        // Verificar si es correo Duoc
-        val esDuoc = email.endsWith("@duoc.cl") || email.endsWith("@duocuc.cl")
-
-        // Crear y agregar usuario
+        val esDuoc = email.endsWith("@duoc.cl", true) || email.endsWith("@duocuc.cl", true)
         val nuevoUsuario = UsuarioSimple(
             nombre = nombre,
-            email = email,
+            email = email.trim(),
             password = password,
-            esDuoc = esDuoc
+            esDuoc = esDuoc,
+            role = Role.USER,        // registro por defecto como USER
+            vendedorId = null        // sólo setear si haces registro de VENDEDOR
         )
         usuarios.add(nuevoUsuario)
-
         return ResultadoRegistro.Exito(nuevoUsuario, esDuoc)
     }
 
     fun login(email: String, password: String): UsuarioSimple? {
-        return usuarios.find { it.email == email && it.password == password }
+        val norm = email.trim().lowercase()
+        return usuarios.find { it.email.lowercase() == norm && it.password == password }
     }
 
-    private fun calcularEdad(fechaNacimiento: String): Int {
-        try {
-            val partes = fechaNacimiento.split("/")
-            if (partes.size != 3) return 0
-
-            val dia = partes[0].toIntOrNull() ?: return 0
-            val mes = partes[1].toIntOrNull() ?: return 0
-            val anio = partes[2].toIntOrNull() ?: return 0
-
-            val anioActual = 2024
-            var edad = anioActual - anio
-
-            val mesActual = 11
-            val diaActual = 3
-
-            if (mes > mesActual || (mes == mesActual && dia > diaActual)) {
-                edad--
-            }
-
-            return edad
-        } catch (e: Exception) {
-            return 0
-        }
-    }
-}
-
-data class UsuarioSimple(
-    val nombre: String,
-    val email: String,
-    val password: String,
-    val esDuoc: Boolean = false
-)
-
-sealed class ResultadoRegistro {
-    data class Exito(val usuario: UsuarioSimple, val esDuoc: Boolean) : ResultadoRegistro()
-    data class Error(val mensaje: String) : ResultadoRegistro()
+    private fun calcularEdad(fechaNacimiento: String): Int = try {
+        val (d, m, a) = fechaNacimiento.split("/").map { it.toInt() }
+        val anioActual = 2025
+        val mesActual = 11
+        val diaActual = 29
+        var edad = anioActual - a
+        if (m > mesActual || (m == mesActual && d > diaActual)) edad--
+        edad
+    } catch (_: Exception) { 0 }
 }

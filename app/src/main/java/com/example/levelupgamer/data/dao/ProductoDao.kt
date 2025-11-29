@@ -48,4 +48,8 @@ interface ProductoDao {
 
     @Query("SELECT COUNT(*) FROM productos")
     suspend fun contarProductos(): Int
+
+    // 🔥 NECESARIO para el panel de vendedor
+    @Query("SELECT * FROM productos WHERE vendedorId = :vendedorId ORDER BY nombre ASC")
+    fun observeByVendedor(vendedorId: Long): Flow<List<Producto>>
 }

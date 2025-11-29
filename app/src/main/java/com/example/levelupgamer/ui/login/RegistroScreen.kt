@@ -149,7 +149,9 @@ fun RegistroScreen(
             Button(
                 onClick = {
                     viewModel.registrar { nombreUsuario, esDuoc ->
-                        navController.navigate("home/$nombreUsuario/$esDuoc") {
+
+
+                        navController.navigate("homeUsuario/$nombreUsuario") {
                             popUpTo("login") { inclusive = true }
                         }
                     }

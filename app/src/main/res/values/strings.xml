@@ -1,3 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Nombre de la app -->
     <string name="app_name">LevelUp Gamer</string>
+
+    <!-- 🔑 Clave de Google Maps (reemplaza por tu API Key real) -->
+    <string name="google_maps_key">AQUI_TU_API_KEY_DE_GOOGLE_MAPS</string>
+
+    <!-- Textos para permisos de ubicación -->
+    <string name="location_permission_rationale">
+        Para mostrar tu ubicación y calcular la distancia a la sucursal, necesitamos tu permiso de ubicación.
+    </string>
+    <string name="location_permission_denied">
+        Permiso de ubicación denegado. Actívalo para ver tu distancia a la sucursal.
+    </string>
+
+    <!-- Textos del mapa / sucursales -->
+    <string name="map_title">Sucursales cercanas</string>
+    <string name="branch_title">Sucursal Level-Up</string>
+    <string name="branch_snippet">Argentina 8577</string>
+    <string name="distance_loading">Obteniendo tu ubicación…</string>
+    <string name="distance_label">Distancia a la sucursal: %1$.2f km</string>
 </resources>

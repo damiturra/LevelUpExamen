@@ -2,23 +2,19 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
-    // Necesario para Room
     kotlin("kapt")
 }
 
 android {
     namespace = "com.example.levelupgamer"
-
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.levelupgamer"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -31,19 +27,24 @@ android {
             )
         }
     }
+
+    // Java 17 + desugaring
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
+    // --- Base / Compose (usa tu BOM del catalog) ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -54,10 +55,15 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // ViewModel para Compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+
+    // Material Icons Extended y LiveData (alineados al BOM)
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.runtime:runtime-livedata")
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
@@ -67,22 +73,25 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Material Icons Extended
-    implementation("androidx.compose.material:material-icons-extended")
+    // CameraX (QR)
+    implementation("androidx.camera:camera-core:1.3.3")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.3.3")
 
-    // 🔹 LiveData para usar observeAsState (si lo llegas a usar)
-    implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
-
-    // 🔹 CameraX
-    val camerax_version = "1.3.3"
-    implementation("androidx.camera:camera-core:$camerax_version")
-    implementation("androidx.camera:camera-camera2:$camerax_version")
-    implementation("androidx.camera:camera-lifecycle:$camerax_version")
-    implementation("androidx.camera:camera-view:$camerax_version")
-
-    // 🔹 ML Kit para leer códigos QR
+    // ML Kit QR
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
+    // >>> OpenStreetMap (osmdroid) <<<
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // (Opcional) Fused Location si luego quieres ubicar al usuario
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // Desugar
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // --- Tests / debug ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
