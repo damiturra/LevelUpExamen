@@ -12,7 +12,7 @@ data class ResumenCarrito(
     val subtotal: Int = 0,
     val descuentoPorcentaje: Int = 0,
     val descuentoMonto: Int = 0,
-    val baseImponible: Int = 0,
+     // aca la prueba
     val ivaPorcentaje: Int = 19,
     val ivaMonto: Int = 0,
     val total: Int = 0
@@ -22,6 +22,7 @@ data class ResumenCarrito(
  * ViewModel para manejar el carrito.
  * Depende de CarritoRepository y se inicializa con un userId (0 = invitado).
  */
+
 class CarritoViewModel(
     private val repository: CarritoRepository
 ) : ViewModel() {
@@ -135,7 +136,7 @@ class CarritoViewModel(
             subtotal = subtotal,
             descuentoPorcentaje = descuentoPorcentaje,
             descuentoMonto = descMonto,
-            baseImponible = base,
+             //aca la prueba
             ivaPorcentaje = ivaPct,
             ivaMonto = ivaMonto,
             total = total
