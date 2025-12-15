@@ -20,12 +20,13 @@ data class PerfilUiState(
     val vendedorId: Long? = null,
 
     // CRUD de perfil
+    //aca prueba 2
     val telefono: String = "",
     val direccion: String = "",
     val numero: String = "",
     val comuna: String = "",
     val region: String = "",
-    //aca prueba 3
+
 
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -68,7 +69,7 @@ class PerfilViewModel(
                 esDuoc = u.esDuoc,
                 role = role,
                 vendedorId = u.vendedorId,
-                //aca prueba 4
+                //aca prueba 3
                 telefono = u.telefono.orEmpty(),
                 direccion = u.direccion.orEmpty(),
                 numero = u.numero.orEmpty(),
@@ -89,7 +90,11 @@ class PerfilViewModel(
     fun onComunaChange(v: String)     { uiState = uiState.copy(comuna = v, savedOk = false) }
     fun onRegionChange(v: String)     { uiState = uiState.copy(region = v, savedOk = false) }
 
-    //aca prueba 5
+    //aca prueba 4
+
+
+
+
 
     /** Guarda cambios en Room y refresca SessionManager (nombre / esDuoc) */
     fun guardar() {
@@ -111,7 +116,7 @@ class PerfilViewModel(
                     esDuoc = u.esDuoc,
                     role = u.role.name,
                     vendedorId = u.vendedorId,
-                    //aca prueba 6
+                    //aca prueba 5
                     telefono = u.telefono.ifBlank { null },
                     direccion = u.direccion.ifBlank { null },
                     numero = u.numero.ifBlank { null },
@@ -130,12 +135,12 @@ class PerfilViewModel(
                 uiState = u.copy(
                     isLoading = false,
                     savedOk = true,
-                    //aca prueba 7
                     telefono = entity.telefono.orEmpty(),
                     direccion = entity.direccion.orEmpty(),
                     numero   = entity.numero.orEmpty(),
                     comuna   = entity.comuna.orEmpty(),
-                    region   = entity.region.orEmpty()
+                    region   = entity.region.orEmpty(),
+                      //aca prueba 6
                 )
             } catch (e: Exception) {
                 uiState = uiState.copy(isLoading = false, error = "No se pudo guardar: ${e.message}")

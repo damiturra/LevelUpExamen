@@ -82,7 +82,10 @@ fun PerfilScreen(navController: NavController) {
                 )
             }
 
-            //aca prueba 8
+            //prueba 7 final
+
+
+
             // CRUD Perfil
             OutlinedTextField(
                 value = ui.telefono,

@@ -57,7 +57,7 @@ fun CarritoScreen(
                         if (resumen!!.descuentoPorcentaje > 0 && resumen!!.descuentoMonto > 0) {
                             SummaryRow("Descuento (${resumen!!.descuentoPorcentaje}%)", -resumen!!.descuentoMonto)
                         }
-                        //Aca la prueba
+
                         SummaryRow("IVA (${resumen!!.ivaPorcentaje}%):", resumen!!.ivaMonto)
                         Divider(Modifier.padding(vertical = 8.dp))
                         SummaryRow("Total:", resumen!!.total, highlight = true)

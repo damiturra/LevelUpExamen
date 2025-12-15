@@ -20,7 +20,7 @@ data class UsuarioEntity(
     val vendedorId: Long? = null,   // solo se usa si es VENDEDOR
 
     // NUEVOS CAMPOS DE PERFIL
-    //aca prueba 1
+     //aca prueba 1
     val telefono: String? = null,
     val direccion: String? = null,
     val numero: String? = null,
