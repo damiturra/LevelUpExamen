@@ -4,9 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.levelupgamer.data.model.UsuariosManager
+import androidx.lifecycle.viewModelScope
+import com.example.levelupgamer.data.repository.UsuarioRepository
 import com.example.levelupgamer.data.session.SessionManager
 import com.example.levelupgamer.data.user.Role
+import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
@@ -15,56 +17,52 @@ data class LoginUiState(
     val error: String? = null
 )
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val usuarioRepository: UsuarioRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
-    fun onEmailChange(value: String) {
-        uiState = uiState.copy(email = value, error = null)
-    }
+    fun onEmailChange(v: String) { uiState = uiState.copy(email = v) }
+    fun onPasswordChange(v: String) { uiState = uiState.copy(password = v) }
 
-    fun onPasswordChange(value: String) {
-        uiState = uiState.copy(password = value, error = null)
-    }
+    fun login(onSuccess: () -> Unit) {
+        val email = uiState.email.trim().lowercase()
+        val pass = uiState.password
 
-    /**
-     * Login con callback que entrega también el rol.
-     */
-    fun hacerLogin(
-        onSuccess: (nombreUsuario: String, esDuoc: Boolean, role: Role) -> Unit
-    ) {
-        if (uiState.email.isBlank() || uiState.password.isBlank()) {
-            uiState = uiState.copy(error = "Completa todos los campos")
+        if (email.isBlank() || pass.isBlank()) {
+            uiState = uiState.copy(error = "Ingresa correo y contraseña")
             return
         }
 
-        uiState = uiState.copy(isLoading = true, error = null)
+        viewModelScope.launch {
+            try {
+                uiState = uiState.copy(isLoading = true, error = null)
 
-        val email = uiState.email.trim().lowercase()
-        val pass  = uiState.password
-        val usuario = UsuariosManager.login(email, pass)
+                val user = usuarioRepository.login(email, pass)
+                if (user == null) {
+                    uiState = uiState.copy(isLoading = false, error = "Credenciales inválidas")
+                    return@launch
+                }
 
-        uiState = uiState.copy(isLoading = false)
+                val role = try { Role.valueOf(user.role) } catch (_: Exception) { Role.USER }
 
-        if (usuario != null) {
-            // Guarda sesión global
-            SessionManager.currentUserId = 1
-            SessionManager.currentUserName = usuario.nombre
-            SessionManager.esDuoc = usuario.esDuoc
-            SessionManager.role = usuario.role
-            SessionManager.currentVendedorId = usuario.vendedorId   // 👈 NUEVO
+                SessionManager.loginSuccess(
+                    id = user.id,
+                    nombre = user.nombre,
+                    email = user.email,
+                    password = user.password,
+                    esDuoc = user.esDuoc,
+                    role = role,
+                    vendedorId = user.vendedorId
+                )
 
-            onSuccess(usuario.nombre, usuario.esDuoc, usuario.role)
-        } else {
-            uiState = uiState.copy(error = "Credenciales incorrectas")
+                uiState = uiState.copy(isLoading = false)
+                onSuccess()
+            } catch (e: Exception) {
+                uiState = uiState.copy(isLoading = false, error = "No se pudo iniciar sesión: ${e.message}")
+            }
         }
-    }
-
-    // Versión antigua, por compatibilidad si la usas en alguna parte
-    fun hacerLoginBasico(
-        onSuccess: (nombreUsuario: String, esDuoc: Boolean) -> Unit
-    ) {
-        hacerLogin { nombre, esDuoc, _ -> onSuccess(nombre, esDuoc) }
     }
 }

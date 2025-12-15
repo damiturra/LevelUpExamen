@@ -41,4 +41,8 @@ class CarritoRepository(
     /** Limpia todo el carrito del usuario. */
     suspend fun clear(userId: Int) =
         dao.clearByUser(userId)
+
+    /** Snapshot de los ítems del carrito para registrar compra */
+    suspend fun getItemsSnapshot(userId: Int): List<ItemCarrito> =
+        dao.getByUser(userId)
 }

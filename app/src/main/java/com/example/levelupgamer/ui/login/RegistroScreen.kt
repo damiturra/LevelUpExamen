@@ -1,176 +1,192 @@
 package com.example.levelupgamer.ui.login
 
-import androidx.compose.foundation.background
+import android.app.Application
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.levelupgamer.data.session.SessionManager
+import com.example.levelupgamer.data.user.Role
 import com.example.levelupgamer.viewmodel.RegistroViewModel
+import com.example.levelupgamer.viewmodel.factories.RegistroVMFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistroScreen(
-    navController: NavController,
-    viewModel: RegistroViewModel = viewModel()
-) {
-    val uiState = viewModel.uiState
+fun RegistroScreen(navController: NavController) {
+    val app = LocalContext.current.applicationContext as Application
+    val vm: RegistroViewModel = viewModel(factory = RegistroVMFactory(app))
+    val ui = vm.uiState
+
+    val isAdmin = SessionManager.role == Role.ADMIN
     var showPassword by remember { mutableStateOf(false) }
 
+    LaunchedEffect(isAdmin) {
+        if (!isAdmin && ui.role != Role.USER) vm.onRoleChange(Role.USER)
+    }
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Registro") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        }
+        topBar = { CenterAlignedTopAppBar(title = { Text("Crear cuenta") }) }
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(16.dp)
         ) {
-            Text(
-                text = "Crea tu cuenta",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = "Completa los siguientes datos",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = uiState.nombre,
-                onValueChange = { viewModel.onNombreChange(it) },
-                label = { Text("Nombre") },
-                leadingIcon = { Icon(Icons.Default.Person, null) },
-                singleLine = true,
+            ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
-            )
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Text("Completa tus datos", style = MaterialTheme.typography.titleLarge)
 
-            OutlinedTextField(
-                value = uiState.email,
-                onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("Correo electrónico") },
-                leadingIcon = { Icon(Icons.Default.Email, null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
-            )
+                    OutlinedTextField(
+                        value = ui.nombre,
+                        onValueChange = vm::onNombreChange,
+                        label = { Text("Nombre") },
+                        singleLine = true,
+                        enabled = !ui.isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-            OutlinedTextField(
-                value = uiState.fechaNacimiento,
-                onValueChange = { viewModel.onFechaNacimientoChange(it) },
-                label = { Text("Fecha de nacimiento (dd/mm/aaaa)") },
-                leadingIcon = { Icon(Icons.Default.DateRange, null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
-            )
+                    OutlinedTextField(
+                        value = ui.email,
+                        onValueChange = vm::onEmailChange,
+                        label = { Text("Correo") },
+                        singleLine = true,
+                        enabled = !ui.isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-            OutlinedTextField(
-                value = uiState.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
-                label = { Text("Contraseña") },
-                leadingIcon = { Icon(Icons.Default.Lock, null) },
-                trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
-                        Icon(
-                            if (showPassword) Icons.Default.VisibilityOff
-                            else Icons.Default.Visibility,
-                            contentDescription = null
+                    // Indicador automático DUOC
+                    if (ui.esDuoc) {
+                        AssistChip(
+                            onClick = { },
+                            enabled = false,
+                            label = { Text("Correo DUOC detectado – descuento aplicado") }
+                        )
+                    } else {
+                        Text(
+                            "Si registras tu correo @duoc.cl, aplicaremos el descuento automáticamente.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                },
-                visualTransformation = if (showPassword)
-                    VisualTransformation.None
-                else
-                    PasswordVisualTransformation(),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
-            )
 
-            if (uiState.error != null) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    OutlinedTextField(
+                        value = ui.password,
+                        onValueChange = vm::onPasswordChange,
+                        label = { Text("Contraseña") },
+                        singleLine = true,
+                        enabled = !ui.isLoading,
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            TextButton(onClick = { showPassword = !showPassword }, enabled = !ui.isLoading) {
+                                Text(if (showPassword) "Ocultar" else "Mostrar")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
-                ) {
-                    Text(
-                        text = uiState.error,
-                        modifier = Modifier.padding(12.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
 
-            if (uiState.mensajeExito != null) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Text(
-                        text = uiState.mensajeExito,
-                        modifier = Modifier.padding(12.dp),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {
-                    viewModel.registrar { nombreUsuario, esDuoc ->
-
-
-                        navController.navigate("homeUsuario/$nombreUsuario") {
-                            popUpTo("login") { inclusive = true }
+                    // Sólo ADMIN elige rol / vendedorId
+                    if (isAdmin) {
+                        Text("Rol", style = MaterialTheme.typography.titleMedium)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FilterChip(
+                                selected = ui.role == Role.USER,
+                                onClick = { vm.onRoleChange(Role.USER) },
+                                label = { Text("USER") }
+                            )
+                            FilterChip(
+                                selected = ui.role == Role.VENDEDOR,
+                                onClick = { vm.onRoleChange(Role.VENDEDOR) },
+                                label = { Text("VENDEDOR") }
+                            )
+                            FilterChip(
+                                selected = ui.role == Role.ADMIN,
+                                onClick = { vm.onRoleChange(Role.ADMIN) },
+                                label = { Text("ADMIN") }
+                            )
+                        }
+                        if (ui.role == Role.VENDEDOR) {
+                            OutlinedTextField(
+                                value = ui.vendedorIdText,
+                                onValueChange = vm::onVendedorIdChange,
+                                label = { Text("Vendedor ID (número)") },
+                                singleLine = true,
+                                enabled = !ui.isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
-                },
-                enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+
+                    ui.error?.let { msg ->
+                        Text(
+                            text = msg,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            vm.registrar { nombre, _, role ->
+                                when (role) {
+                                    Role.ADMIN -> navController.navigate("homeSupervisor") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                    Role.VENDEDOR -> {
+                                        val vendId = SessionManager.currentVendedorId ?: 0L
+                                        navController.navigate("homeVendedor/$vendId") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    }
+                                    else -> navController.navigate("homeUsuario/$nombre") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }
+                            }
+                        },
+                        enabled = !ui.isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        if (ui.isLoading) {
+                            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Text("Creando cuenta…")
+                        } else {
+                            Text("Crear cuenta")
+                        }
+                    }
+
+                    Text(
+                        text = "Tus datos se almacenan localmente para esta demo.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    Text("REGISTRARME")
                 }
             }
         }

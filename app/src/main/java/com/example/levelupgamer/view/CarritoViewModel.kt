@@ -4,9 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.levelupgamer.data.model.ItemCarrito
 import com.example.levelupgamer.data.repository.CarritoRepository
+import com.example.levelupgamer.data.repository.CompraRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.example.levelupgamer.data.model.CompraEntity
+import com.example.levelupgamer.data.model.CompraItemEntity
+
 
 data class ResumenCarrito(
     val subtotal: Int = 0,
@@ -24,8 +28,10 @@ data class ResumenCarrito(
  */
 
 class CarritoViewModel(
-    private val repository: CarritoRepository
+    private val repository: CarritoRepository,
+    private val compraRepository: CompraRepository
 ) : ViewModel() {
+
 
     // ---- Estado principal ----
     private val _userId = MutableStateFlow(0)                // 0 = invitado
@@ -112,17 +118,63 @@ class CarritoViewModel(
     /**
      * Simula el “checkout”: limpia el carrito y ejecuta un callback (volver atrás, etc.)
      */
+    /**
+     * Checkout:
+     * 1) Toma snapshot de ítems + resumen.
+     * 2) Registra la compra en historial.
+     * 3) Limpia el carrito.
+     */
     fun finalizarCompra(onDone: (() -> Unit)? = null) {
         val uid = _userId.value
         if (uid <= 0) {
             onDone?.invoke()
             return
         }
+
         viewModelScope.launch {
+            // 1) Snapshot de ítems actuales
+            val items = repository.getItemsSnapshot(uid)
+            if (items.isEmpty()) {
+                onDone?.invoke()
+                return@launch
+            }
+
+            // 2) Obtener resumen actual (o recalcular por seguridad)
+            val resumenActual = resumen.value ?: run {
+                val subtotalCalc = items.sumOf { it.cantidad * it.productoPrecio }
+                calcularResumen(subtotalCalc, _descPorcentaje.value)
+            }
+
+            // 3) Registrar compra en historial
+            val compra = CompraEntity(
+                userId = uid,
+                subtotal = resumenActual.subtotal,
+                descuentoPorcentaje = resumenActual.descuentoPorcentaje,
+                descuentoMonto = resumenActual.descuentoMonto,
+                ivaPorcentaje = resumenActual.ivaPorcentaje,
+                ivaMonto = resumenActual.ivaMonto,
+                total = resumenActual.total
+            )
+
+            val itemsCompra = items.map {
+                CompraItemEntity(
+                    compraId = 0, // se rellena en el DAO
+                    productoCodigo = it.productoCodigo,
+                    productoNombre = it.productoNombre,
+                    productoPrecio = it.productoPrecio,
+                    cantidad = it.cantidad
+                )
+            }
+
+            compraRepository.registrarCompra(compra, itemsCompra)
+
+            // 4) Limpiar carrito
             repository.clear(uid)
+
             onDone?.invoke()
         }
     }
+
 
     // ---- Helpers ----
     private fun calcularResumen(subtotal: Int, descuentoPorcentaje: Int): ResumenCarrito {

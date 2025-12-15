@@ -8,7 +8,7 @@ data class UsuarioSimple(
     val password: String,
     val esDuoc: Boolean = false,
     val role: Role = Role.USER,
-    val vendedorId: Long? = null          // 👈 NUEVO: necesario para la ruta homeVendedor/{vendedorId}
+    val vendedorId: Long? = null   // para la ruta homeVendedor/{vendedorId}
 )
 
 sealed class ResultadoRegistro {

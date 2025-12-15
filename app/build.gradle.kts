@@ -101,7 +101,7 @@ dependencies {
         testImplementation("io.mockk:mockk:1.13.10")
 
     // Coroutines Test
-        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 
     // AndroidX Test
         testImplementation("androidx.arch.core:core-testing:2.2.0")

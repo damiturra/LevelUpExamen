@@ -1,177 +1,164 @@
 package com.example.levelupgamer.ui.home
 
+import android.app.Application
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.levelupgamer.viewmodel.PerfilViewModel
+import com.example.levelupgamer.viewmodel.factories.PerfilVMFactory
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PerfilScreen(
-    navController: NavController,
-    username: String,
-    viewModel: PerfilViewModel = viewModel()
-) {
-    val uiState = viewModel.uiState
-    val snackbarHostState = remember { SnackbarHostState() }
+fun PerfilScreen(navController: NavController) {
+    val app = LocalContext.current.applicationContext as Application
+    val vm: PerfilViewModel = viewModel(factory = PerfilVMFactory(app))
+    val ui = vm.uiState
 
-    // Cargar nombre inicial desde el username que viene del login/registro
-    LaunchedEffect(username) {
-        viewModel.setNombreInicial(username)
-    }
-
-    // Mostrar snackbar cuando haya mensaje
-    LaunchedEffect(uiState.mensaje) {
-        uiState.mensaje?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.limpiarMensaje()
-        }
-    }
+    LaunchedEffect(Unit) { vm.cargarUsuario() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi Perfil") },
+                title = { Text("Mi perfil") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Tarjeta con info principal
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Default.AccountCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(100.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = uiState.nombre.ifBlank { username },
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$username@email.com",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-
-            Divider()
-
-            Text(
-                "Datos Editables",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-
             // Nombre
             OutlinedTextField(
-                value = uiState.nombre,
-                onValueChange = { viewModel.onNombreChange(it) },
+                value = ui.nombre,
+                onValueChange = vm::onNombreChange,
                 label = { Text("Nombre") },
-                leadingIcon = { Icon(Icons.Default.Person, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                enabled = !ui.isLoading,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            // Teléfono
+            // Email (solo lectura)
             OutlinedTextField(
-                value = uiState.telefono,
-                onValueChange = { viewModel.onTelefonoChange(it) },
+                value = ui.email,
+                onValueChange = {},
+                label = { Text("Correo") },
+                singleLine = true,
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Indicador DUOC
+            if (ui.esDuoc) {
+                AssistChip(onClick = {}, enabled = false, label = { Text("Correo DUOC – descuento activo") })
+            } else {
+                Text(
+                    "El descuento DUOC se detecta automáticamente con correo @duoc.cl",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            //aca prueba 8
+            // CRUD Perfil
+            OutlinedTextField(
+                value = ui.telefono,
+                onValueChange = vm::onTelefonoChange,
                 label = { Text("Teléfono") },
-                leadingIcon = { Icon(Icons.Default.Phone, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                enabled = !ui.isLoading,
+                modifier = Modifier.fillMaxWidth()
             )
-
-            // Dirección
             OutlinedTextField(
-                value = uiState.direccion,
-                onValueChange = { viewModel.onDireccionChange(it) },
+                value = ui.direccion,
+                onValueChange = vm::onDireccionChange,
                 label = { Text("Dirección") },
-                leadingIcon = { Icon(Icons.Default.Home, null) },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                enabled = !ui.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = ui.numero,
+                    onValueChange = vm::onNumeroChange,
+                    label = { Text("Número") },
+                    singleLine = true,
+                    enabled = !ui.isLoading,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = ui.comuna,
+                    onValueChange = vm::onComunaChange,
+                    label = { Text("Comuna") },
+                    singleLine = true,
+                    enabled = !ui.isLoading,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            OutlinedTextField(
+                value = ui.region,
+                onValueChange = vm::onRegionChange,
+                label = { Text("Región") },
+                singleLine = true,
+                enabled = !ui.isLoading,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            // Error si falta info
-            if (uiState.error != null) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Text(
-                        text = uiState.error,
-                        modifier = Modifier.padding(12.dp),
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
+            // Mensajes
+            ui.error?.let { msg ->
+                Text(
+                    text = msg,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            if (ui.savedOk) {
+                Text(
+                    text = "Cambios guardados",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // Botón Guardar
             Button(
-                onClick = { viewModel.guardarCambios() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                enabled = !uiState.isLoading
+                onClick = vm::guardar,
+                enabled = !ui.isLoading,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
+                if (ui.isLoading) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text("Guardando…")
                 } else {
-                    Icon(Icons.Default.Save, null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("GUARDAR CAMBIOS")
+                    Text("Guardar cambios")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
         }
     }
 }

@@ -4,21 +4,23 @@ import com.example.levelupgamer.data.dao.CategoriaDao
 import com.example.levelupgamer.data.dao.ProductoDao
 import com.example.levelupgamer.data.model.Producto
 import com.example.levelupgamer.data.repository.ProductoRepository
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class ProductoRepositoryTest : StringSpec({
+class ProductoRepositoryTest {
 
-    // TEST 1: obtenerTodosLosProductos() debe emitir la lista simulada
-    "obtenerTodosLosProductos debe retornar lista de productos simulada" {
-        // Arrange
-        val fakeProducts = listOf(
+    @Test
+    fun `obtenerTodosLosProductos emite lista del dao`() = runTest {
+        val productoDao = mockk<ProductoDao>()
+        val categoriaDao = mockk<CategoriaDao>(relaxed = true)
+
+        val lista = listOf(
             Producto(
                 codigo = "P001",
                 nombre = "Teclado gamer",
@@ -27,45 +29,38 @@ class ProductoRepositoryTest : StringSpec({
                 categoriaId = 1,
                 categoriaNombre = "Periféricos",
                 vendedorId = 1L,
-                calificacion = 5.0f
+                calificacion = 5.0f,
+                stock = 10,                                // <- si no existe en tu data class, elimina esta línea
+                imagenUrl = "https://example.com/p1.jpg"   // <- si es opcional, puedes omitirla
             ),
             Producto(
                 codigo = "P002",
                 nombre = "Mouse gamer",
-                descripcion = "Mouse óptico 7200 DPI",
+                descripcion = "Mouse 7200 DPI",
                 precio = 19990,
                 categoriaId = 1,
                 categoriaNombre = "Periféricos",
                 vendedorId = 1L,
-                calificacion = 4.5f
+                calificacion = 4.5f,
+                stock = 8,
+                imagenUrl = "https://example.com/p2.jpg"
             )
         )
 
-        val productoDao = mockk<ProductoDao>()
-        val categoriaDao = mockk<CategoriaDao>(relaxed = true)
-
-        // El DAO devuelve un Flow con la lista fake
-        every { productoDao.obtenerTodosLosProductos() } returns flowOf(fakeProducts)
+        every { productoDao.obtenerTodosLosProductos() } returns flowOf(lista)
 
         val repo = ProductoRepository(productoDao, categoriaDao)
 
-        // Act + Assert
-        runTest {
-            val emisiones = mutableListOf<List<Producto>>()
-
-            repo.obtenerTodosLosProductos().collect { lista ->
-                emisiones.add(lista)
-            }
-
-            emisiones.size shouldBe 1
-            emisiones[0] shouldContainExactly fakeProducts
-        }
+        val recibida = repo.obtenerTodosLosProductos().first()
+        assertEquals(lista, recibida)
     }
 
-    // TEST 2: obtenerProductoPorCodigo() debe delegar en el DAO y devolver el producto correcto
-    "obtenerProductoPorCodigo debe retornar el producto correcto desde el dao" {
-        // Arrange
-        val fakeProducto = Producto(
+    @Test
+    fun `obtenerProductoPorCodigo delega en dao`() = runTest {
+        val productoDao = mockk<ProductoDao>()
+        val categoriaDao = mockk<CategoriaDao>(relaxed = true)
+
+        val p = Producto(
             codigo = "P001",
             nombre = "Teclado gamer",
             descripcion = "Teclado mecánico RGB",
@@ -73,20 +68,16 @@ class ProductoRepositoryTest : StringSpec({
             categoriaId = 1,
             categoriaNombre = "Periféricos",
             vendedorId = 1L,
-            calificacion = 5.0f
+            calificacion = 5.0f,
+            stock = 10,
+            imagenUrl = "https://example.com/p1.jpg"
         )
 
-        val productoDao = mockk<ProductoDao>()
-        val categoriaDao = mockk<CategoriaDao>(relaxed = true)
-
-        coEvery { productoDao.obtenerProductoPorCodigo("P001") } returns fakeProducto
+        coEvery { productoDao.obtenerProductoPorCodigo("P001") } returns p
 
         val repo = ProductoRepository(productoDao, categoriaDao)
 
-        // Act + Assert
-        runTest {
-            val resultado = repo.obtenerProductoPorCodigo("P001")
-            resultado shouldBe fakeProducto
-        }
+        val r = repo.obtenerProductoPorCodigo("P001")
+        assertEquals(p, r)
     }
-})
+}

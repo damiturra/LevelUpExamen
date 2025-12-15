@@ -25,18 +25,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.levelupgamer.R
 import com.example.levelupgamer.data.user.Role
+import com.example.levelupgamer.data.session.SessionManager
 import com.example.levelupgamer.viewmodel.LoginViewModel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
+import com.example.levelupgamer.viewmodel.factories.LoginVMFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    viewModel: LoginViewModel = viewModel()
+    navController: NavController
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: LoginViewModel = viewModel(
+        factory = LoginVMFactory(app)
+    )
     val uiState = viewModel.uiState
-    var showPassword by remember { mutableStateOf(false) }
+
+    var showPassword by rememberSaveable { mutableStateOf(false) }
+    var showDemo by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -49,6 +58,7 @@ fun LoginScreen(
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -58,6 +68,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             Spacer(modifier = Modifier.height(32.dp))
 
             var pressed by remember { mutableStateOf(false) }
@@ -105,14 +116,20 @@ fun LoginScreen(
                         )
                     }
                 },
-                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation =
+                    if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             )
 
             if (uiState.error != null) {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
                         text = uiState.error,
                         modifier = Modifier.padding(12.dp),
@@ -121,9 +138,7 @@ fun LoginScreen(
                 }
             }
 
-            // ————— Usuarios de prueba
-            var showDemo by rememberSaveable { mutableStateOf(false) }
-
+            // Usuarios demo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -156,51 +171,42 @@ fun LoginScreen(
                     }
                 }
             }
-            // ————————————————————————————————————————————————
 
             Button(
                 onClick = {
-                    viewModel.hacerLogin { nombreUsuario, _, role ->
-                        when (role) {
-                            Role.USER -> navController.navigate("homeUsuario/$nombreUsuario") {
-                                popUpTo("login") { inclusive = true }
+                    // Dentro del onClick de "Iniciar sesión":
+                    viewModel.login {
+                        when (SessionManager.role) {
+                            Role.USER -> {
+                                val username = SessionManager.currentUserName ?: "user"
+                                navController.navigate("homeUsuario/$username") {
+                                    popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                             Role.VENDEDOR -> {
-                                // Demo: mapea el correo a un vendedorId Long
-                                val vendedorId = when (uiState.email.trim().lowercase()) {
-                                    "damian@vendedor.cl" -> 1L
-                                    "jean@vendedor.cl"   -> 2L
-                                    else                 -> 1L // fallback
-                                }
-                                navController.navigate("homeVendedor/$vendedorId") {
+                                val vendId = SessionManager.currentVendedorId ?: 0L
+                                navController.navigate("homeVendedor/$vendId") {
                                     popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
                                 }
                             }
                             Role.ADMIN -> {
                                 navController.navigate("homeSupervisor") {
                                     popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
                                 }
                             }
                         }
                     }
+
                 },
-                enabled = !uiState.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
+                enabled = !uiState.isLoading
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("INICIAR SESIÓN")
-                }
+                Text("Iniciar sesión")
             }
 
 
-            // Enlace claro para registrarse
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("¿No tienes cuenta? ")
                 TextButton(onClick = { navController.navigate("registro") }) {

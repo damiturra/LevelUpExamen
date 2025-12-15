@@ -51,6 +51,8 @@ fun HomeScreen(
     esDuoc: Boolean,
     viewModel: ProductoViewModel = viewModel(factory = ProductoVMFactory())
 ) {
+
+    val displayName = SessionManager.currentUserName ?: username
     // Productos desde Room
     val productos by viewModel.productos.collectAsState(initial = emptyList())
 
@@ -80,9 +82,10 @@ fun HomeScreen(
                         }
                     }
 
-                    IconButton(onClick = { navController.navigate("perfil/$username") }) {
+                    IconButton(onClick = { navController.navigate("perfil") }) {
                         Icon(Icons.Filled.Person, contentDescription = "Perfil")
                     }
+
 
                     IconButton(onClick = {
                         SessionManager.clear()
@@ -121,7 +124,7 @@ fun HomeScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Hola, $username 👋",
+                        text = "Hola, $displayName 👋",
                         style = MaterialTheme.typography.headlineSmall
                     )
                     if (esDuoc) {
@@ -143,7 +146,7 @@ fun HomeScreen(
                     }
 
                     Spacer(Modifier.height(12.dp))
-                    OutlinedButton(onClick = { navController.navigate("mapaSucursales") }) {
+                        OutlinedButton(onClick = { navController.navigate("mapaSucursales") }) {
                         Icon(Icons.Filled.Map, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Ver sucursales cercanas")

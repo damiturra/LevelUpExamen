@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.compose.ui.platform.LocalContext
 import com.example.levelupgamer.data.database.AppDatabase
 import com.example.levelupgamer.data.repository.CarritoRepository
+import com.example.levelupgamer.data.repository.CompraRepository
 import com.example.levelupgamer.view.CarritoViewModel
+
 
 /**
  * Factory para CarritoViewModel que NO depende de un singleton Application.
@@ -23,7 +25,8 @@ class CarritoVMFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val db = AppDatabase.getDatabase(application)
-        val repo = CarritoRepository(db.carritoDao())
-        return CarritoViewModel(repo) as T
+        val carritoRepo = CarritoRepository(db.carritoDao())
+        val compraRepo = CompraRepository(db.compraDao())
+        return CarritoViewModel(carritoRepo, compraRepo) as T
     }
 }

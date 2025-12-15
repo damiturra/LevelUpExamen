@@ -1,80 +1,94 @@
 package com.example.levelupgamer.login
 
+import com.example.levelupgamer.data.model.UsuarioEntity
+import com.example.levelupgamer.data.repository.UsuarioRepository
 import com.example.levelupgamer.data.session.SessionManager
 import com.example.levelupgamer.data.user.Role
 import com.example.levelupgamer.viewmodel.LoginViewModel
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import io.mockk.coEvery
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
 
-    private lateinit var viewModel: LoginViewModel
+    private lateinit var vm: LoginViewModel
+    private lateinit var repo: UsuarioRepository
+    private val dispatcher = StandardTestDispatcher()
 
     @BeforeEach
     fun setup() {
-        // Dejamos la sesión limpia antes de cada prueba
+        Dispatchers.setMain(dispatcher)
         SessionManager.clear()
-        viewModel = LoginViewModel()
+
+        // Mock del repositorio (no usamos Room real en unit tests)
+        repo = mockk(relaxed = true)
+
+        vm = LoginViewModel(repo)
     }
 
-    // TEST 1: Campos vacíos → debe mostrar error y NO llamar al callback
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
+        SessionManager.clear()
+    }
+
     @Test
-    fun `hacerLogin con campos vacios debe mostrar error y no llamar callback`() {
-        var callbackLlamado = false
+    fun `login con campos vacios muestra error y no llama callback`() = runTest {
+        var called = false
 
-        viewModel.hacerLogin { _, _, _ ->
-            callbackLlamado = true
-        }
+        vm.login { called = true }  // no seteamos email/password
+        // No hay corutina en curso (retorna temprano por validación)
 
-        val state = viewModel.uiState
-
-        assertEquals(
-            "Completa todos los campos",
-            state.error,
-            "Debe mostrar mensaje de error cuando email o password están vacíos"
+        Assertions.assertEquals(
+            "Ingresa correo y contraseña",
+            vm.uiState.error
         )
-        assertFalse(callbackLlamado, "El callback de éxito no debe llamarse con campos vacíos")
-
-        // Sesión sigue vacía
-        assertNull(SessionManager.currentUserId)
-        assertNull(SessionManager.currentUserName)
+        Assertions.assertFalse(called)
+        Assertions.assertNull(SessionManager.currentUserId)
     }
 
-    // TEST 2: Credenciales válidas → actualiza SessionManager y llama callback
     @Test
-    fun `hacerLogin con credenciales validas debe actualizar sesion y llamar callback`() {
-        // Credenciales válidas que tienes en UsuariosManager
-        viewModel.onEmailChange("damian@duoc.cl")
-        viewModel.onPasswordChange("123456")
+    fun `login con credenciales validas actualiza sesion y llama callback`() = runTest {
+        // Arrange: el repo devuelve un usuario válido (usar coEvery para suspend)
+        val user = UsuarioEntity(
+            id = 1,
+            nombre = "Damian Duoc",
+            email = "damian@duoc.cl",
+            password = "123456",
+            esDuoc = true,
+            role = Role.USER.name,
+            vendedorId = null
+        )
+        coEvery { repo.login("damian@duoc.cl", "123456") } returns user
+        // (alternativa más laxa)
+        // coEvery { repo.login(any(), any()) } returns user
 
-        var callbackLlamado = false
-        var nombreCallback: String? = null
-        var esDuocCallback: Boolean? = null
-        var rolCallback: Role? = null
+        vm.onEmailChange("damian@duoc.cl")
+        vm.onPasswordChange("123456")
 
-        viewModel.hacerLogin { nombre, esDuoc, rol ->
-            callbackLlamado = true
-            nombreCallback = nombre
-            esDuocCallback = esDuoc
-            rolCallback = rol
-        }
+        var called = false
+        vm.login { called = true }
 
-        val state = viewModel.uiState
+        // Avanzar corutinas del viewModelScope
+        advanceUntilIdle()
 
-        // No debería haber error
-        assertNull(state.error)
-        // Callback llamado
-        assertTrue(callbackLlamado)
-        assertEquals("Damian", nombreCallback)
-        assertEquals(true, esDuocCallback)
-        assertEquals(Role.USER, rolCallback)
+        // Assert: callback + estado + session
+        Assertions.assertTrue(called, "Debe ejecutarse el onSuccess()")
+        Assertions.assertNull(vm.uiState.error)
 
-        // SessionManager actualizado
-        assertEquals(1, SessionManager.currentUserId)
-        assertEquals("Damian", SessionManager.currentUserName)
-        assertTrue(SessionManager.esDuoc)
-        assertEquals(Role.USER, SessionManager.role)
+        Assertions.assertEquals(1, SessionManager.currentUserId)
+        Assertions.assertEquals("Damian Duoc", SessionManager.currentUserName)
+        Assertions.assertEquals("damian@duoc.cl", SessionManager.currentUserEmail)
+        Assertions.assertEquals("123456", SessionManager.currentUserPassword)
+        Assertions.assertTrue(SessionManager.esDuoc)
+        Assertions.assertEquals(Role.USER, SessionManager.role)
     }
 }
-

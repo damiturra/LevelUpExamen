@@ -44,4 +44,9 @@ interface CarritoDao {
     /** Limpia todo el carrito del usuario. */
     @Query("DELETE FROM carrito WHERE userId = :userId")
     suspend fun clearByUser(userId: Int)
+
+    /** Lista completa (no observable) para registrar compra */
+    @Query("SELECT * FROM carrito WHERE userId = :userId ORDER BY id ASC")
+    suspend fun getByUser(userId: Int): List<ItemCarrito>
+
 }

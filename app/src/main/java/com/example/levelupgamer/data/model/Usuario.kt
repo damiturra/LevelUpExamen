@@ -26,7 +26,7 @@ object UsuariosManager {
             )
         )
 
-        // Vendedores (ahora con vendedorId)
+        // Vendedores (con vendedorId)
         usuarios.add(
             UsuarioSimple(
                 nombre = "Damian Vendedor",
@@ -88,8 +88,8 @@ object UsuariosManager {
             email = email.trim(),
             password = password,
             esDuoc = esDuoc,
-            role = Role.USER,        // registro por defecto como USER
-            vendedorId = null        // sólo setear si haces registro de VENDEDOR
+            role = Role.USER,
+            vendedorId = null
         )
         usuarios.add(nuevoUsuario)
         return ResultadoRegistro.Exito(nuevoUsuario, esDuoc)
@@ -108,5 +108,7 @@ object UsuariosManager {
         var edad = anioActual - a
         if (m > mesActual || (m == mesActual && d > diaActual)) edad--
         edad
-    } catch (_: Exception) { 0 }
+    } catch (_: Exception) {
+        0
+    }
 }
